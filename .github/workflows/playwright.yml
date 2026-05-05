@@ -61,7 +61,9 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps ${{ matrix.project }}
+        # chromium is always installed alongside the matrix browser because the
+        # `setup` project in playwright.config.ts runs on Desktop Chrome.
+        run: npx playwright install --with-deps ${{ matrix.project }} chromium
 
       - name: Run Playwright tests
         run: npx playwright test --project=${{ matrix.project }}
@@ -105,13 +107,16 @@ jobs:
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           path: all-reports/
 
       - name: Merge reports into a single HTML report
+        continue-on-error: true
         run: npx playwright merge-reports --reporter html all-reports/
 
       - name: Deploy report to GitHub Pages
+        continue-on-error: true
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
