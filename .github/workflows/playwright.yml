@@ -1,0 +1,119 @@
+# =============================================================================
+# Playwright CI workflow
+# =============================================================================
+#
+# Required GitHub repository secrets
+# ---------------------------------
+# Add these in: Settings → Secrets and variables → Actions → New repository secret
+#
+#   BASE_URL       UI origin under test. MUST be `https://demoqa.com`
+#                  (NOT `https://demoqa.com/books` — the framework appends
+#                  `/login`, `/profile`, `/books` itself).
+#   API_BASE_URL   API origin (typically also `https://demoqa.com`).
+#   TEST_USERNAME  Username of the shared DemoQA account used by `auth.setup.ts`.
+#   TEST_PASSWORD  Password for that account.
+#
+# GitHub Pages
+# ------------
+# To publish HTML reports, enable Pages on the repo:
+#   Settings → Pages → Source: "Deploy from a branch" → Branch: `gh-pages`
+# Reports land at:
+#   https://<owner>.github.io/<repo>/reports/<run-number>/
+#
+# Nightly runs
+# ------------
+# The 00:00 UTC schedule helps surface flaky tests that pass on PR runs but
+# fail intermittently against the live DemoQA service. Artifacts are uploaded
+# unconditionally on schedule (not just on failure) so trends can be inspected.
+# =============================================================================
+
+name: Playwright Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  test:
+    name: Playwright Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps ${{ matrix.project }}
+
+      - name: Run Playwright tests
+        run: npx playwright test --project=${{ matrix.project }}
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          CI: true
+
+      - name: Upload test artifacts
+        if: failure() || github.event_name == 'schedule'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 30
+
+  report:
+    name: Publish Report
+    runs-on: ubuntu-latest
+    needs: test
+    if: always() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-reports/
+
+      - name: Merge reports into a single HTML report
+        run: npx playwright merge-reports --reporter html all-reports/
+
+      - name: Deploy report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./playwright-report
+          destination_dir: reports/${{ github.run_number }}

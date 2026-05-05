@@ -1,5 +1,9 @@
 # DemoQA Playwright Testing Framework
 
+[![Playwright Tests](https://github.com/OWNER/REPO/actions/workflows/playwright.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/playwright.yml)
+
+> Replace `OWNER/REPO` in the badge URL above with your GitHub username and repository name.
+
 Production-ready Playwright + TypeScript testing framework for the DemoQA Book Store application. Covers UI, API, and end-to-end flows across Chromium, Firefox, and WebKit.
 
 ## Overview
