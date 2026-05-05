@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { STORAGE_STATE } from './paths';
 
 function loadEnvFile(envPath: string): void {
   if (!fs.existsSync(envPath)) return;
@@ -18,7 +19,6 @@ function loadEnvFile(envPath: string): void {
 loadEnvFile(path.resolve(__dirname, '.env'));
 
 const isCI = !!process.env.CI;
-const STORAGE_STATE = path.resolve(__dirname, 'auth-state', 'user.json');
 
 export default defineConfig({
   testDir: './tests',

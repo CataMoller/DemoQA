@@ -51,7 +51,9 @@ export class BasePage {
   }
 
   private async readUserInfo(): Promise<StoredUserInfo> {
-    const raw = await this.page.evaluate(() => window.localStorage.getItem('userInfo'));
+    const raw = await this.page.evaluate(() =>
+      window.localStorage.getItem('userInfo'),
+    );
     if (!raw) {
       throw new Error('userInfo not found in localStorage — user is not logged in');
     }

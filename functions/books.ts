@@ -1,4 +1,5 @@
 import { type APIRequestContext } from '@playwright/test';
+import { assertResponse } from './utils';
 
 const API_BASE_URL = process.env.API_BASE_URL ?? 'https://demoqa.com';
 
@@ -19,10 +20,7 @@ interface RawBooksResponse {
  */
 export async function listBooks(api: APIRequestContext): Promise<BookItem[]> {
   const response = await api.get(`${API_BASE_URL}/BookStore/v1/Books`);
-  if (!response.ok()) {
-    throw new Error(`[listBooks] unexpected status ${response.status()}: ${await response.text()}`);
-  }
-  const body = (await response.json()) as RawBooksResponse;
+  const body = await assertResponse<RawBooksResponse>(response, 200);
   return body.books;
 }
 
@@ -34,10 +32,7 @@ export async function getBook(api: APIRequestContext, isbn: string): Promise<Boo
   const response = await api.get(`${API_BASE_URL}/BookStore/v1/Book`, {
     params: { ISBN: isbn },
   });
-  if (!response.ok()) {
-    throw new Error(`[getBook] unexpected status ${response.status()}: ${await response.text()}`);
-  }
-  return (await response.json()) as BookItem;
+  return assertResponse<BookItem>(response, 200);
 }
 
 /**
@@ -54,11 +49,7 @@ export async function addToCollection(
     headers: { Authorization: `Bearer ${token}` },
     data: { userId, collectionOfIsbns: [{ isbn }] },
   });
-  if (!response.ok()) {
-    throw new Error(
-      `[addToCollection] unexpected status ${response.status()}: ${await response.text()}`,
-    );
-  }
+  await assertResponse<void>(response, 201);
 }
 
 /**
@@ -75,11 +66,7 @@ export async function removeFromCollection(
     headers: { Authorization: `Bearer ${token}` },
     data: { userId, isbn },
   });
-  if (!response.ok()) {
-    throw new Error(
-      `[removeFromCollection] unexpected status ${response.status()}: ${await response.text()}`,
-    );
-  }
+  await assertResponse<void>(response, 204);
 }
 
 /**

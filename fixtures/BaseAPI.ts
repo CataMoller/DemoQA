@@ -1,4 +1,5 @@
-import { type APIRequestContext, type APIResponse, expect } from '@playwright/test';
+import { type APIRequestContext, type APIResponse } from '@playwright/test';
+import { assertResponse } from '@/functions/utils';
 
 export class BaseAPI {
   private readonly _request: APIRequestContext;
@@ -11,22 +12,15 @@ export class BaseAPI {
     return this._request;
   }
 
-  async checkResponse<T = unknown>(response: APIResponse, expectedStatus: number): Promise<T> {
-    const actual = response.status();
-    expect(
-      actual,
-      `Expected ${expectedStatus} from ${response.url()}, got ${actual}: ${await response.text()}`,
-    ).toBe(expectedStatus);
-
-    if (actual === 204) {
-      return undefined as T;
-    }
-
-    const contentType = response.headers()['content-type'] ?? '';
-    if (!contentType.includes('application/json')) {
-      return undefined as T;
-    }
-
-    return (await response.json()) as T;
+  /**
+   * Thin wrapper around the standalone `assertResponse` utility, exposed on
+   * the `apiContext` fixture so tests can write
+   * `await apiContext.checkResponse<T>(response, 200)` without importing the
+   * helper directly. Behaviour is identical to `assertResponse`: throws with
+   * URL + status + body when the status doesn't match, returns the parsed
+   * JSON body on success, returns `undefined as T` for 204 No Content.
+   */
+  async checkResponse<T>(response: APIResponse, expectedStatus: number): Promise<T> {
+    return assertResponse<T>(response, expectedStatus);
   }
 }
