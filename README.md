@@ -1,8 +1,6 @@
 # DemoQA Playwright Testing Framework
 
-[![Playwright Tests](https://github.com/OWNER/REPO/actions/workflows/playwright.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/playwright.yml)
-
-> Replace `OWNER/REPO` in the badge URL above with your GitHub username and repository name.
+[![Playwright Tests](https://github.com/CataMoller/DemoQA/actions/workflows/playwright.yml/badge.svg)](https://github.com/CataMoller/DemoQA/actions/workflows/playwright.yml)
 
 Production-ready Playwright + TypeScript testing framework for the DemoQA Book Store application. Covers UI, API, and end-to-end flows across Chromium, Firefox, and WebKit.
 
@@ -180,7 +178,19 @@ Fixture key: `apiContext` = pure API test using the `BaseAPI` fixture; `customPa
 
 ## CI/CD
 
-See [`.github/workflows/playwright.yml`](.github/workflows/playwright.yml) — runs on push to `main`, on pull requests, and nightly at 00:00 UTC. *(File to be added next.)*
+See [`.github/workflows/playwright.yml`](.github/workflows/playwright.yml) —
+runs on push to `master`, on pull requests targeting `master`, and nightly at 00:00 UTC.
+
+The workflow runs tests in parallel across three browsers (chromium, firefox, webkit)
+using a matrix strategy. On failure, test artifacts and traces are uploaded and
+retained for 30 days. After every successful push to `master`, the HTML report
+is published to GitHub Pages at:
+<https://catamoller.github.io/DemoQA/reports/{run-number}/>
+
+To configure in a new environment:
+
+1. Add the four required secrets in **Settings → Secrets and variables → Actions** (`BASE_URL`, `API_BASE_URL`, `TEST_USERNAME`, `TEST_PASSWORD`).
+2. Enable GitHub Pages in **Settings → Pages → Branch: `gh-pages`**.
 
 ## Coding standards
 
